@@ -1,163 +1,151 @@
 # YouTube Trending Video Analysis
 
-A full-stack application to analyze YouTube trending videos and predict future trends. This project demonstrates data analysis, machine learning, and full-stack web development skills.
+A full-stack data science application that analyzes YouTube trending videos, identifies patterns, and predicts trending potential for new videos.
 
 ## Project Overview
 
 This application:
 
-1. **Collects data** from YouTube's Trending Videos API
-2. **Analyzes patterns** in trending videos
-3. **Builds prediction models** to identify potential trending videos
-4. **Visualizes insights** through a web interface
+1. **Collects data** from YouTube's Trending Videos API across multiple regions
+2. **Analyzes patterns** in trending videos to identify key success factors
+3. **Trains ML models** to predict trending potential and engagement
+4. **Visualizes insights** through an interactive dashboard
+5. **Provides recommendations** for optimizing video attributes
+
+## Features
+
+- **Data Collection Pipeline**: Automated collection of trending videos across multiple regions and categories
+- **Advanced Analysis**: Processing of video metadata to extract meaningful insights
+- **Machine Learning Models**: Prediction of trending potential and engagement scores
+- **API Backend**: FastAPI endpoints for accessing data and predictions
+- **Interactive Dashboard**: Streamlit-based visualization of trends and patterns
+- **Recommendation Engine**: Suggestions for video optimization based on data analysis
 
 ## Tech Stack
 
 ### Backend
-- **Python** - Core language for data processing and ML
-- **FastAPI** - API framework
-- **Pandas & NumPy** - Data manipulation
-- **Matplotlib/Seaborn** - Data visualization
-- **Scikit-learn** - Machine learning
-- **SQLAlchemy** - ORM for database interactions
-- **PostgreSQL** - Database (optional)
+- **Python**: Core language for data processing and ML
+- **FastAPI**: API framework for serving data and predictions
+- **Pandas & NumPy**: Data manipulation and analysis
+- **Scikit-learn**: Machine learning algorithms
+- **YouTube Data API**: Data source for trending videos
 
-### Frontend (Planned)
-- **React** - UI framework
-- **Chart.js/Recharts** - Interactive visualizations
-- **Tailwind CSS** - Styling
+### Frontend
+- **Streamlit**: Interactive data visualization dashboard
+- **Matplotlib & Seaborn**: Data visualization libraries
 
-## Setup
-
-### Prerequisites
-
-- Python 3.9+
-- YouTube Data API key
-- Git
-
-### Installation
-
-1. Clone the repository
-   ```bash
-   git clone https://github.com/yourusername/youtube-trend-analyzer.git
-   cd youtube-trend-analyzer
-   ```
-
-2. Create and activate a virtual environment
-   ```bash
-   # On macOS/Linux
-   python3 -m venv venv
-   source venv/bin/activate
-   
-   # On Windows
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-
-3. Install dependencies
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Create a `.env` file with your YouTube API key
-   ```
-   YOUTUBE_API_KEY=your_youtube_api_key_here
-   ```
-
-5. Run the setup test
-   ```bash
-   python test_setup.py
-   ```
-
-## Usage
-
-### Collecting Data
-
-Run the initial data collection script:
-
-```bash
-python initial_collection.py --regions US --analyze
-```
-
-Options:
-- `--regions`: Comma-separated list of region codes (e.g., US,GB,CA)
-- `--categories`: Collect data by category
-- `--analyze`: Perform initial analysis
-- `--db`: Store data in database (requires database setup)
-
-### Scheduling Data Collection
-
-For automated data collection at regular intervals:
-
-```bash
-python -m src.data.scheduler --regions US --interval 6
-```
-
-This will collect trending data every 6 hours for the US region.
+### Data Science
+- **Feature Engineering**: Extraction of relevant features from video metadata
+- **Classification & Regression Models**: Prediction of trending potential and engagement
+- **Time-Series Analysis**: Temporal patterns in video publishing and engagement
 
 ## Project Structure
 
 ```
 youtube-trend-analyzer/
-├── data/                  # Data storage
-│   ├── raw/               # Raw collected data
-│   └── processed/         # Processed data
-├── analysis/              # Analysis outputs and visualizations
-├── src/
-│   ├── data/              # Data collection and processing
+├── data/                     # Data storage
+│   ├── raw/                  # Raw collected data
+│   ├── processed/            # Processed data
+│   └── ml/                   # Machine learning data
+├── analysis/                 # Analysis outputs
+│   └── enhanced/             # Enhanced analysis visuals
+├── models/                   # Trained ML models
+├── src/                      # Source code
+│   ├── data/                 # Data collection and processing
 │   │   ├── youtube_fetcher.py
 │   │   ├── data_processor.py
 │   │   ├── scheduler.py
 │   │   └── database.py
-│   ├── models/            # ML models (future)
-│   └── api/               # API endpoints (future)
-├── frontend/              # React frontend (future)
-├── tests/                 # Unit tests
-├── initial_collection.py  # Initial data collection script
-├── test_setup.py          # Setup verification script
-├── requirements.txt       # Python dependencies
-└── README.md              # Project documentation
+│   ├── models/               # ML models
+│   │   ├── feature_engineering.py
+│   │   ├── training.py
+│   │   └── prediction.py
+│   └── api/                  # API endpoints
+│       └── main.py
+├── streamlit_app.py          # Streamlit dashboard
+├── initial_collection.py     # Data collection script
+├── run_ml_pipeline.py        # ML pipeline script
+├── run_api.py                # API runner
+└── requirements.txt          # Python dependencies
 ```
 
-## Features and Components
+## Setup and Installation
 
-### Data Collection
-- Automated collection of trending videos across multiple regions
-- Category-specific trending analysis
-- Historical tracking of video performance
+### Prerequisites
+
+- Python 3.9+
+- YouTube Data API key
+
+### Installation
+
+1. Clone the repository
+   ```bash
+   git clone https://github.com/sdanzig3/youtube-trend-analyzer.git
+   cd youtube-trend-analyzer
+   ```
+
+2. Create a virtual environment and install dependencies
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+3. Create a `.env` file with your YouTube API key
+   ```
+   YOUTUBE_API_KEY=your_youtube_api_key_here
+   ```
+
+### Running the Application
+
+1. Collect trending video data
+   ```bash
+   python initial_collection.py --regions US,GB,CA --analyze --enhanced
+   ```
+
+2. Run the ML pipeline
+   ```bash
+   python run_ml_pipeline.py --step all
+   ```
+
+3. Start the API (optional)
+   ```bash
+   python run_api.py
+   ```
+
+4. Launch the dashboard
+   ```bash
+   streamlit run streamlit_app.py
+   ```
+
+## Key Insights & Features
 
 ### Data Analysis
-- Feature extraction from video metadata
-- Engagement pattern analysis
-- Publishing time optimization
-- Title and tag effectiveness analysis
 
-### Prediction Models (Planned)
-- Trending potential scoring
-- Feature importance analysis
-- Content strategy recommendations
+- Identification of optimal video durations by category
+- Publishing time patterns that maximize engagement
+- Title and tag characteristics of high-performing videos
+- Regional differences in trending content
 
-### Web Interface (Planned)
-- Data visualization dashboard
-- Trending prediction tool
-- Content optimization recommendations
+### Machine Learning
 
-## Development Roadmap
+- Prediction of trending potential with feature importance analysis
+- Engagement score estimation based on video attributes
+- Recommendations for video optimization
 
-- [x] Project setup and environment configuration
-- [x] Data collection pipeline
-- [x] Basic data processing and analysis
-- [ ] API endpoint development
-- [ ] Initial prediction model
-- [ ] Frontend dashboard
-- [ ] Advanced analytics features
-- [ ] Model optimization
-- [ ] User authentication
-- [ ] Channel-specific recommendations
+### Dashboard Views
 
-## Contributing
+- **Overview**: Summary statistics and trending distributions
+- **Trending Videos**: Current top trending videos with metrics
+- **Category Analysis**: Deep dive into category-specific patterns
+- **Prediction Tool**: Interactive prediction of trending potential for new videos
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Future Enhancements
+
+- Thumbnail image analysis using computer vision
+- Sentiment analysis of video titles and descriptions
+- Topic modeling across trending categories
+- Content strategy recommendations based on channel performance
 
 ## License
 
@@ -166,4 +154,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgements
 
 - YouTube Data API for providing access to trending video data
-- Various open-source libraries used in this project
+- Open-source libraries that made this project possible
+
+---
+
+*Created by Samuel Danziger* 
+
+*This project was developed as a demonstration of full-stack data science capabilities, combining data engineering, machine learning, and web development.*
