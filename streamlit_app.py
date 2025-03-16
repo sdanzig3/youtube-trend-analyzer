@@ -29,7 +29,7 @@ st.title("YouTube Trending Video Analysis")
 # Sidebar navigation
 page = st.sidebar.selectbox(
     "Choose a page",
-    ["Dashboard", "Trending Videos", "Category Analysis", "Prediction Tool"]
+    ["Dashboard", "Trending Videos", "Category Analysis", "Prediction Tool", "Advanced Insights"]
 )
 
 # Load data
@@ -242,7 +242,100 @@ elif page == "Prediction Tool":
         st.subheader("Recommendations")
         for rec in prediction.get('recommendations', []):
             st.write(f"• {rec}")
-
+elif page == "Advanced Insights":
+    st.header("Advanced Trending Pattern Analysis")
+    
+    # 1. Optimal publishing times
+    st.subheader("Optimal Publishing Times by Category")
+    
+    # Create a placeholder for when we have the data
+    category = st.selectbox("Select Category", sorted(data['category_name'].unique()))
+    category_data = data[data['category_name'] == category]
+    
+    # Hour analysis for selected category
+    if 'publish_hour' in category_data.columns and 'engagement_score' in category_data.columns:
+        hour_engagement = category_data.groupby('publish_hour')['engagement_score'].mean().reset_index()
+        best_hour = hour_engagement.loc[hour_engagement['engagement_score'].idxmax(), 'publish_hour']
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.lineplot(data=hour_engagement, x='publish_hour', y='engagement_score', marker='o', ax=ax)
+        plt.axvline(x=best_hour, color='r', linestyle='--')
+        plt.title(f'Engagement by Hour for {category} Videos')
+        plt.xlabel('Hour of Day (UTC)')
+        plt.ylabel('Average Engagement Score')
+        plt.xticks(range(0, 24, 2))
+        st.pyplot(fig)
+        
+        st.info(f"Best publishing hour for {category} videos: {best_hour}:00 UTC")
+    
+    # 2. Title pattern analysis
+    st.subheader("Title Pattern Analysis")
+    
+    # Word frequency
+    if 'title' in data.columns:
+        title_words = []
+        for title in data['title']:
+            words = re.findall(r'\b[a-zA-Z]{3,}\b', title.lower())
+            title_words.extend(words)
+        
+        word_freq = pd.Series(title_words).value_counts()
+        top_words = word_freq.head(20)
+        
+        fig, ax = plt.subplots(figsize=(10, 8))
+        sns.barplot(x=top_words.values, y=top_words.index, ax=ax)
+        plt.title('Top 20 Words in Trending Video Titles')
+        plt.xlabel('Frequency')
+        st.pyplot(fig)
+        
+        # Title length analysis
+        if 'title_length' not in data.columns:
+            data['title_length'] = data['title'].str.len()
+        
+        data['title_length_group'] = pd.cut(data['title_length'], 
+                                         bins=[0, 20, 40, 60, 80, 100, 120, 140, 160],
+                                         labels=['0-20', '21-40', '41-60', '61-80', '81-100', '101-120', '121-140', '141-160'])
+        
+        if 'engagement_score' in data.columns:
+            title_engagement = data.groupby('title_length_group')['engagement_score'].mean().reset_index()
+            
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.barplot(data=title_engagement, x='title_length_group', y='engagement_score', ax=ax)
+            plt.title('Engagement by Title Length')
+            plt.xlabel('Title Length')
+            plt.ylabel('Average Engagement Score')
+            st.pyplot(fig)
+            
+            best_length = title_engagement.loc[title_engagement['engagement_score'].idxmax(), 'title_length_group']
+            st.info(f"Optimal title length for maximum engagement: {best_length} characters")
+    
+    # 3. Regional differences
+    st.subheader("Regional Trending Differences")
+    
+    if 'region' in data.columns:
+        region_counts = data['region'].value_counts()
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.barplot(x=region_counts.values, y=region_counts.index, ax=ax)
+        plt.title('Video Count by Region')
+        plt.xlabel('Number of Trending Videos')
+        st.pyplot(fig)
+        
+        # Category distribution by region
+        region_cat_counts = data.groupby(['region', 'category_name']).size().reset_index(name='count')
+        
+        regions = st.multiselect("Select Regions to Compare", sorted(data['region'].unique()), 
+                               default=sorted(data['region'].unique())[:3])
+        
+        if regions:
+            filtered_counts = region_cat_counts[region_cat_counts['region'].isin(regions)]
+            
+            pivot = filtered_counts.pivot(index='category_name', columns='region', values='count')
+            
+            fig, ax = plt.subplots(figsize=(12, 8))
+            sns.heatmap(pivot, annot=True, cmap='viridis', ax=ax)
+            plt.title('Category Distribution by Region')
+            plt.tight_layout()
+            st.pyplot(fig)
 # Run the app
 if __name__ == "__main__":
     # The app is run by streamlit automatically

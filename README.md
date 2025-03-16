@@ -7,15 +7,17 @@ A full-stack data science application that analyzes YouTube trending videos, ide
 This application:
 
 1. **Collects data** from YouTube's Trending Videos API across multiple regions
-2. **Analyzes patterns** in trending videos to identify key success factors
-3. **Trains ML models** to predict trending potential and engagement
-4. **Visualizes insights** through an interactive dashboard
-5. **Provides recommendations** for optimizing video attributes
+2. **Tracks trending videos** over time to analyze progression patterns
+3. **Analyzes patterns** in trending videos to identify key success factors
+4. **Trains ML models** to predict trending potential and engagement
+5. **Visualizes insights** through an interactive dashboard
+6. **Provides recommendations** for optimizing video attributes
 
 ## Features
 
 - **Data Collection Pipeline**: Automated collection of trending videos across multiple regions and categories
-- **Advanced Analysis**: Processing of video metadata to extract meaningful insights
+- **Time-Series Analysis**: Tracking videos over time to understand growth patterns
+- **Advanced Analytics**: Processing of video metadata to extract meaningful insights
 - **Machine Learning Models**: Prediction of trending potential and engagement scores
 - **API Backend**: FastAPI endpoints for accessing data and predictions
 - **Interactive Dashboard**: Streamlit-based visualization of trends and patterns
@@ -38,6 +40,7 @@ This application:
 - **Feature Engineering**: Extraction of relevant features from video metadata
 - **Classification & Regression Models**: Prediction of trending potential and engagement
 - **Time-Series Analysis**: Temporal patterns in video publishing and engagement
+- **Advanced Pattern Recognition**: Identifying optimal content strategies across regions and categories
 
 ## Project Structure
 
@@ -46,10 +49,13 @@ youtube-trend-analyzer/
 ├── data/                     # Data storage
 │   ├── raw/                  # Raw collected data
 │   ├── processed/            # Processed data
+│   ├── time_series/          # Time-series tracking data
 │   └── ml/                   # Machine learning data
 ├── analysis/                 # Analysis outputs
-│   └── enhanced/             # Enhanced analysis visuals
+│   └── advanced/             # Advanced analysis visuals
 ├── models/                   # Trained ML models
+├── notebooks/                # Jupyter notebooks for analysis
+│   └── advanced_analysis.ipynb
 ├── src/                      # Source code
 │   ├── data/                 # Data collection and processing
 │   │   ├── youtube_fetcher.py
@@ -63,7 +69,8 @@ youtube-trend-analyzer/
 │   └── api/                  # API endpoints
 │       └── main.py
 ├── streamlit_app.py          # Streamlit dashboard
-├── initial_collection.py     # Data collection script
+├── initial_collection.py     # Initial data collection script
+├── time_series_collection.py # Time-series data collection
 ├── run_ml_pipeline.py        # ML pipeline script
 ├── run_api.py                # API runner
 └── requirements.txt          # Python dependencies
@@ -100,20 +107,25 @@ youtube-trend-analyzer/
 
 1. Collect trending video data
    ```bash
-   python initial_collection.py --regions US,GB,CA --analyze --enhanced
+   python initial_collection.py --regions US,GB,CA,IN,JP,BR --analyze --enhanced
    ```
 
-2. Run the ML pipeline
+2. Run time-series data collection (tracks videos over time)
+   ```bash
+   python time_series_collection.py --hours 3 --iterations 4 --regions US,GB
+   ```
+
+3. Run the ML pipeline
    ```bash
    python run_ml_pipeline.py --step all
    ```
 
-3. Start the API (optional)
+4. Start the API (optional)
    ```bash
    python run_api.py
    ```
 
-4. Launch the dashboard
+5. Launch the dashboard
    ```bash
    streamlit run streamlit_app.py
    ```
@@ -126,6 +138,16 @@ youtube-trend-analyzer/
 - Publishing time patterns that maximize engagement
 - Title and tag characteristics of high-performing videos
 - Regional differences in trending content
+- View growth rates and velocity patterns
+- Performance differences across regions and categories
+
+### Time-Series Analysis
+
+- Tracking trending videos over time to measure:
+  - View velocity (views gained per hour)
+  - Engagement growth patterns
+  - Duration of trending status
+  - Category-specific growth rates
 
 ### Machine Learning
 
@@ -138,7 +160,18 @@ youtube-trend-analyzer/
 - **Overview**: Summary statistics and trending distributions
 - **Trending Videos**: Current top trending videos with metrics
 - **Category Analysis**: Deep dive into category-specific patterns
+- **Advanced Insights**: Regional comparisons and time-based pattern analysis
 - **Prediction Tool**: Interactive prediction of trending potential for new videos
+
+## Advanced Analytics
+
+The project includes in-depth analysis of:
+
+- **Title Pattern Analysis**: Word frequency, optimal title length, and impact of different title styles
+- **Optimal Publishing Times**: Best hours and days to publish by category and region
+- **Regional Trending Differences**: How trending patterns vary across different countries
+- **View Growth Patterns**: How quickly videos accumulate views and engagement
+- **Category-Specific Insights**: Tailored recommendations for each content category
 
 ## Future Enhancements
 
@@ -146,6 +179,7 @@ youtube-trend-analyzer/
 - Sentiment analysis of video titles and descriptions
 - Topic modeling across trending categories
 - Content strategy recommendations based on channel performance
+- Predictive modeling for view growth trajectory
 
 ## License
 
