@@ -184,9 +184,15 @@ def load_model_metadata(models_dir="models"):
 @st.cache_data(ttl=300)
 def get_api_data(endpoint, params=None):
     """Get data from the API."""
-    api_base_url = st.session_state.get('api_url', 'http://localhost:8000')
+    import os
+    api_base_url = os.environ.get('API_URL', 'http://api:8000')
     url = f"{api_base_url}/{endpoint}"
     
+    if params is None:
+        params = {}
+    if 'limit' not in params and not endpoint.endswith('/models'):
+        params['limit'] = 1000
+
     try:
         response = requests.get(url, params=params)
         response.raise_for_status()
@@ -372,15 +378,28 @@ if page == "📊 Dashboard":
             pivot_data.index = [day_names[i] if i < len(day_names) else f"Day {i}" for i in pivot_data.index]
             
             # Create heatmap
-            fig = px.imshow(
-                pivot_data,
-                labels=dict(x="Hour of Day", y="Day of Week", color="Video Count"),
-                x=[str(h) for h in range(24)],
-                y=pivot_data.index,
-                color_continuous_scale='Reds',
-                title="Publication Time Heatmap"
-            )
-            st.plotly_chart(fig, use_container_width=True)
+                        # Check if pivot data is empty
+            if pivot_data.empty or pivot_data.size == 0:
+                st.info("Not enough time data to create the heatmap.")
+            else:
+                # Make sure all hours are represented
+                for hour in range(24):
+                    if hour not in pivot_data.columns:
+                        pivot_data[hour] = 0
+                
+                # Sort columns to ensure proper order
+                pivot_data = pivot_data.reindex(sorted(pivot_data.columns), axis=1)
+                
+                # Create heatmap
+                fig = px.imshow(
+                    pivot_data,
+                    labels=dict(x="Hour of Day", y="Day of Week", color="Video Count"),
+                    x=[str(h) for h in range(24)],
+                    y=pivot_data.index,
+                    color_continuous_scale='Reds',
+                    title="Publication Time Heatmap"
+                )
+                st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("Time data not available in the dataset")
         

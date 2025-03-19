@@ -178,7 +178,7 @@ async def root():
 async def get_trending(
     region: str = Query("US", description="Region code (e.g., US, GB, CA)"),
     category: Optional[str] = Query(None, description="Category ID"),
-    limit: int = Query(50, description="Number of results to return"),
+    limit: int = Query(1000, description="Number of results to return"),
     data: pd.DataFrame = Depends(get_trending_data)
 ):
     """Get trending videos with optional filters."""

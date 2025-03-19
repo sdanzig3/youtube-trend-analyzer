@@ -130,7 +130,12 @@ def main():
                                 db.store_trending_videos(processed_cat_df)
                             except Exception as e:
                                 logger.error(f"Database storage error for {region} - {category}: {e}")
-            
+                # Process category data
+                processed_cat_df = processor.process_trending_data(cat_df)
+                # Add to all data
+                all_data.append(processed_cat_df)
+
+                
             # Avoid API rate limiting
             time.sleep(2)
             

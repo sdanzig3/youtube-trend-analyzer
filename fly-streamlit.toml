@@ -1,0 +1,17 @@
+# fly.toml for Streamlit
+app = "youtube-trend-streamlit"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "dockerfile.streamlit"
+
+[http_service]
+  internal_port = 8501
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[processes]
+  app = "streamlit run streamlit_app.py --server.port=8501 --server.address=0.0.0.0"
