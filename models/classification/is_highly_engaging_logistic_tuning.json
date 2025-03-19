@@ -1,0 +1,218 @@
+{
+  "best_params": {
+    "solver": "liblinear",
+    "penalty": "l2",
+    "max_iter": 500,
+    "class_weight": null,
+    "C": 10
+  },
+  "best_score": 0.9984028213166145,
+  "mean_test_score": [
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    0.9984028213166145,
+    NaN,
+    0.7074816882760067,
+    NaN,
+    NaN,
+    0.7690653811728654,
+    0.9977882379832812,
+    0.7689086413609532,
+    NaN,
+    NaN,
+    0.6921956232772353,
+    0.9978056426332287,
+    NaN,
+    NaN,
+    0.9979138829022988
+  ],
+  "std_test_score": [
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    0.002172101648108848,
+    NaN,
+    0.11426694248307867,
+    NaN,
+    NaN,
+    0.10753390843110519,
+    0.0021758739544912834,
+    0.10755529879249888,
+    NaN,
+    NaN,
+    0.10676006912638723,
+    0.004388714733542365,
+    NaN,
+    NaN,
+    0.0032925669671258467
+  ],
+  "mean_train_score": [
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    NaN,
+    1.0,
+    NaN,
+    0.7081061270905744,
+    NaN,
+    NaN,
+    0.7742532627161092,
+    1.0,
+    0.7742532627161092,
+    NaN,
+    NaN,
+    0.6929801308536865,
+    0.999259449740251,
+    NaN,
+    NaN,
+    0.9997124710928279
+  ],
+  "params": [
+    {
+      "solver": "lbfgs",
+      "penalty": "elasticnet",
+      "max_iter": 2000,
+      "class_weight": null,
+      "C": 0.1
+    },
+    {
+      "solver": "liblinear",
+      "penalty": null,
+      "max_iter": 500,
+      "class_weight": null,
+      "C": 0.01
+    },
+    {
+      "solver": "liblinear",
+      "penalty": null,
+      "max_iter": 100,
+      "class_weight": "balanced",
+      "C": 1
+    },
+    {
+      "solver": "lbfgs",
+      "penalty": "elasticnet",
+      "max_iter": 500,
+      "class_weight": null,
+      "C": 100
+    },
+    {
+      "solver": "lbfgs",
+      "penalty": "elasticnet",
+      "max_iter": 500,
+      "class_weight": null,
+      "C": 10
+    },
+    {
+      "solver": "liblinear",
+      "penalty": "l2",
+      "max_iter": 500,
+      "class_weight": null,
+      "C": 10
+    },
+    {
+      "solver": "liblinear",
+      "penalty": "elasticnet",
+      "max_iter": 500,
+      "class_weight": "balanced",
+      "C": 0.1
+    },
+    {
+      "solver": "saga",
+      "penalty": "l2",
+      "max_iter": 1000,
+      "class_weight": null,
+      "C": 0.001
+    },
+    {
+      "solver": "liblinear",
+      "penalty": null,
+      "max_iter": 1000,
+      "class_weight": "balanced",
+      "C": 0.001
+    },
+    {
+      "solver": "saga",
+      "penalty": "elasticnet",
+      "max_iter": 2000,
+      "class_weight": "balanced",
+      "C": 1
+    },
+    {
+      "solver": "saga",
+      "penalty": "l1",
+      "max_iter": 2000,
+      "class_weight": "balanced",
+      "C": 10
+    },
+    {
+      "solver": "lbfgs",
+      "penalty": "l2",
+      "max_iter": 500,
+      "class_weight": "balanced",
+      "C": 10
+    },
+    {
+      "solver": "saga",
+      "penalty": "l2",
+      "max_iter": 2000,
+      "class_weight": "balanced",
+      "C": 0.1
+    },
+    {
+      "solver": "saga",
+      "penalty": "elasticnet",
+      "max_iter": 500,
+      "class_weight": "balanced",
+      "C": 1
+    },
+    {
+      "solver": "lbfgs",
+      "penalty": "elasticnet",
+      "max_iter": 100,
+      "class_weight": "balanced",
+      "C": 100
+    },
+    {
+      "solver": "saga",
+      "penalty": null,
+      "max_iter": 500,
+      "class_weight": "balanced",
+      "C": 0.01
+    },
+    {
+      "solver": "liblinear",
+      "penalty": "l1",
+      "max_iter": 1000,
+      "class_weight": "balanced",
+      "C": 0.1
+    },
+    {
+      "solver": "liblinear",
+      "penalty": "elasticnet",
+      "max_iter": 100,
+      "class_weight": "balanced",
+      "C": 0.001
+    },
+    {
+      "solver": "saga",
+      "penalty": "elasticnet",
+      "max_iter": 2000,
+      "class_weight": null,
+      "C": 100
+    },
+    {
+      "solver": "lbfgs",
+      "penalty": null,
+      "max_iter": 100,
+      "class_weight": "balanced",
+      "C": 0.01
+    }
+  ]
+}

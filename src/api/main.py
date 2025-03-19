@@ -4,19 +4,29 @@ import sys
 from typing import List, Dict, Optional, Any
 from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import pandas as pd
+from datetime import datetime
+import logging
+import json
 
 # Add the project root to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 
 from src.data.youtube_fetcher import CATEGORY_MAPPING
+from .model_service import ModelService
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("api")
 
 # Initialize FastAPI app
 app = FastAPI(
     title="YouTube Trending Videos API",
     description="API for analyzing YouTube trending videos and predicting trending potential",
-    version="0.1.0"
+    version="1.0.0"
 )
 
 # Add CORS middleware
@@ -27,6 +37,16 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+
+# Models directory - can be overridden with environment variable
+MODELS_DIR = os.environ.get("MODELS_DIR", "models")
+
+# Global cache for storing data and models
+DATA_CACHE = {
+    "trending_data": None,
+    "last_updated": None,
+    "model_service": None
+}
 
 # Pydantic models for requests and responses
 class VideoDetails(BaseModel):
@@ -66,25 +86,29 @@ class TimeAnalysis(BaseModel):
     hourly_distribution: Dict[int, float]
 
 class PredictionRequest(BaseModel):
-    title: str
-    description: Optional[str] = None
-    duration_seconds: int
-    category_id: str
-    tags: Optional[List[str]] = []
-    thumbnail_url: Optional[str] = None
+    title: str = Field(..., description="Video title")
+    description: Optional[str] = Field(None, description="Video description")
+    duration_seconds: int = Field(..., description="Video duration in seconds")
+    category_id: str = Field(..., description="Video category ID")
+    tags: Optional[List[str]] = Field([], description="Video tags")
+    thumbnail_url: Optional[str] = Field(None, description="Thumbnail URL")
+    
+    # Optional fields for better predictions
+    publish_hour: Optional[int] = Field(None, description="Hour of publication (0-23)")
+    publish_day: Optional[int] = Field(None, description="Day of week (0=Monday, 6=Sunday)")
+    publish_month: Optional[int] = Field(None, description="Month of publication (1-12)")
+    channel_title: Optional[str] = Field(None, description="Channel title")
 
 class PredictionResponse(BaseModel):
     trending_score: float
     engagement_score: float
     views_estimate: int
     recommendations: List[str]
+    model_predictions: Optional[Dict[str, Any]] = None
 
-# Global cache for storing data
-# In a production app, you'd use a proper database
-DATA_CACHE = {
-    "trending_data": None,
-    "last_updated": None
-}
+class AvailableModelsResponse(BaseModel):
+    classification: List[str]
+    regression: List[str]
 
 # Helper function to load data
 def load_data():
@@ -105,10 +129,11 @@ def load_data():
         
         # Load the data
         df = pd.read_csv(file_path)
+        logger.info(f"Loaded trending data from {file_path}: {len(df)} rows")
         return df
     
     except Exception as e:
-        print(f"Error loading data: {e}")
+        logger.error(f"Error loading data: {e}")
         return None
 
 # Dependency to get data
@@ -116,11 +141,19 @@ def get_trending_data():
     """Get trending data from cache or load it."""
     if DATA_CACHE["trending_data"] is None:
         DATA_CACHE["trending_data"] = load_data()
+        DATA_CACHE["last_updated"] = datetime.now()
     
     if DATA_CACHE["trending_data"] is None:
         raise HTTPException(status_code=404, detail="No trending data available. Run data collection first.")
     
     return DATA_CACHE["trending_data"]
+
+# Dependency to get model service
+def get_model_service():
+    """Get or create model service instance."""
+    if DATA_CACHE["model_service"] is None:
+        DATA_CACHE["model_service"] = ModelService(MODELS_DIR)
+    return DATA_CACHE["model_service"]
 
 # Routes
 @app.get("/")
@@ -128,13 +161,16 @@ async def root():
     """Root endpoint with API information."""
     return {
         "message": "YouTube Trending Analysis API",
+        "version": "1.0.0",
         "docs": "/docs",
         "endpoints": [
             "/trending",
             "/trending/categories",
             "/trending/time-analysis",
             "/trending/popular-channels",
-            "/predict"
+            "/predict",
+            "/api/models",
+            "/api/predict/all"
         ]
     }
 
@@ -320,10 +356,29 @@ async def get_popular_channels(
     return {"channels": channel_stats.to_dict(orient="records"), "count": len(channel_stats)}
 
 @app.post("/predict", response_model=PredictionResponse)
-async def predict_trending_potential(video: PredictionRequest):
-    """Predict the trending potential of a video based on its attributes."""
-    # This is a placeholder implementation
-    # In a real app, you would use a trained ML model
+async def predict_trending_potential(
+    video: PredictionRequest,
+    service: ModelService = Depends(get_model_service)
+):
+    """Predict the trending potential of a video based on its attributes and ML models."""
+    # Convert PredictionRequest to dictionary
+    video_data = video.dict()
+    
+    # Process text features
+    process_text_features(video_data)
+    
+    # Try to get ML model predictions
+    model_predictions = {}
+    try:
+        # Get all model predictions
+        ml_predictions = service.make_all_predictions(video_data)
+        
+        # Add to model_predictions dictionary
+        for model_type, predictions in ml_predictions.items():
+            model_predictions[model_type] = predictions
+    except Exception as e:
+        logger.warning(f"Error making ML predictions: {e}")
+        # Continue with heuristic-based predictions
     
     # Basic score calculation based on video attributes
     base_score = 5.0  # Middle of 0-10 scale
@@ -373,6 +428,15 @@ async def predict_trending_potential(video: PredictionRequest):
     
     # Calculate trending score (0-10 scale)
     trending_score = base_score + title_factor + duration_factor + tag_factor + category_factor
+    
+    # If we have ML predictions, incorporate them
+    if 'classification' in model_predictions and 'is_viral' in model_predictions['classification']:
+        viral_pred = model_predictions['classification']['is_viral']
+        if 'probability' in viral_pred and viral_pred['probability'] is not None:
+            # Blend ML prediction with heuristic
+            ml_score = viral_pred['probability'] * 10  # Convert to 0-10 scale
+            trending_score = (trending_score * 0.3) + (ml_score * 0.7)  # Weight ML prediction higher
+    
     trending_score = max(0, min(10, trending_score))
     
     # Generate recommendations
@@ -404,15 +468,161 @@ async def predict_trending_potential(video: PredictionRequest):
     # Estimate views based on trending score
     views_estimate = int(5000 * (2 ** trending_score / 32))
     
+    # If we have ML predictions for views, use them
+    if 'regression' in model_predictions and 'views_per_hour' in model_predictions['regression']:
+        views_pred = model_predictions['regression']['views_per_hour']
+        if 'prediction' in views_pred and views_pred['prediction'] is not None:
+            # Use ML prediction but adjust with heuristic
+            predicted_views_per_hour = views_pred['prediction']
+            views_estimate = int(predicted_views_per_hour * 48)  # Estimate for 2 days
+    
     # Engagement score estimate (0-10 scale)
     engagement_score = trending_score * 0.8  # Slightly lower than trending score typically
+    
+    # If we have ML predictions for engagement, use them
+    if 'regression' in model_predictions and 'engagement_score' in model_predictions['regression']:
+        eng_pred = model_predictions['regression']['engagement_score']
+        if 'prediction' in eng_pred and eng_pred['prediction'] is not None:
+            # Use ML prediction directly if available
+            engagement_score = eng_pred['prediction']
+            # Ensure it's in 0-10 range
+            engagement_score = max(0, min(10, engagement_score))
     
     return PredictionResponse(
         trending_score=round(trending_score, 1),
         engagement_score=round(engagement_score, 1),
         views_estimate=views_estimate,
-        recommendations=recommendations
+        recommendations=recommendations,
+        model_predictions=model_predictions
     )
+
+# New endpoints for ML models
+
+@app.get("/api/models", response_model=AvailableModelsResponse, tags=["Models"])
+def available_models(service: ModelService = Depends(get_model_service)):
+    """Get available prediction models."""
+    return service.get_available_models()
+
+@app.get("/api/models/{target_name}/features", response_model=List[str], tags=["Models"])
+def model_features(target_name: str, service: ModelService = Depends(get_model_service)):
+    """Get required features for a specific model."""
+    try:
+        features = service.get_required_features(target_name)
+        if not features:
+            raise HTTPException(status_code=404, detail=f"Model for {target_name} not found")
+        return features
+    except Exception as e:
+        logger.error(f"Error getting features for {target_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/predict/classification/{target_name}", tags=["Predictions"])
+def predict_classification(
+    target_name: str, 
+    video_data: PredictionRequest,
+    service: ModelService = Depends(get_model_service)
+):
+    """Make a classification prediction."""
+    try:
+        # Convert VideoData to dict
+        data_dict = video_data.dict()
+        
+        # Process text features
+        process_text_features(data_dict)
+        
+        # Make prediction
+        result = service.predict_classification(data_dict, target_name)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error making classification prediction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/predict/regression/{target_name}", tags=["Predictions"])
+def predict_regression(
+    target_name: str, 
+    video_data: PredictionRequest,
+    service: ModelService = Depends(get_model_service)
+):
+    """Make a regression prediction."""
+    try:
+        # Convert VideoData to dict
+        data_dict = video_data.dict()
+        
+        # Process text features
+        process_text_features(data_dict)
+        
+        # Make prediction
+        result = service.predict_regression(data_dict, target_name)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error making regression prediction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/predict/all", tags=["Predictions"])
+def predict_all(
+    video_data: PredictionRequest,
+    service: ModelService = Depends(get_model_service)
+):
+    """Make predictions with all available models."""
+    try:
+        # Convert VideoData to dict
+        data_dict = video_data.dict()
+        
+        # Process text features
+        process_text_features(data_dict)
+        
+        # Make all predictions
+        results = service.make_all_predictions(data_dict)
+        
+        # Add timestamp
+        results['timestamp'] = datetime.now().isoformat()
+        
+        return results
+    except Exception as e:
+        logger.error(f"Error making predictions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Helper function to extract text features
+def process_text_features(data_dict: Dict[str, Any]):
+    """Process and extract features from text fields."""
+    import re
+    
+    # Process title if available
+    if 'title' in data_dict and data_dict['title']:
+        title = data_dict['title']
+        
+        # Extract basic title features
+        data_dict['title_length'] = len(title)
+        data_dict['title_word_count'] = len(title.split())
+        data_dict['title_has_number'] = int(bool(re.search(r'\d', title)))
+        data_dict['title_has_question'] = int('?' in title)
+        data_dict['title_has_exclamation'] = int('!' in title)
+        
+        # Count capitalized words
+        words = title.split()
+        data_dict['title_caps_count'] = sum(1 for word in words if word.isupper() and len(word) > 1)
+    
+    # Process description if available
+    if 'description' in data_dict and data_dict['description']:
+        desc = data_dict['description']
+        
+        # Extract basic description features
+        data_dict['description_length'] = len(desc)
+        data_dict['description_word_count'] = len(desc.split())
+        data_dict['description_url_count'] = desc.count('http')
+    
+    # Process tags if available
+    if 'tags' in data_dict and data_dict['tags']:
+        tags = data_dict['tags']
+        
+        # Extract tag features
+        data_dict['tag_count'] = len(tags)
+        data_dict['tag_avg_length'] = sum(len(tag) for tag in tags) / max(len(tags), 1)
+    
+    return data_dict
 
 # Run the app with uvicorn
 if __name__ == "__main__":

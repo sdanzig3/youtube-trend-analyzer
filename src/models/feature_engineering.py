@@ -399,6 +399,532 @@ class FeatureEngineer:
             for target in target_list:
                 f.write(f"{target}\n")
 
+    # Enhanced feature engineering methods to add to your FeatureEngineer class
+
+    def extract_advanced_text_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Extract advanced features from text data like titles and descriptions.
+        
+        Args:
+            df: DataFrame with video data including titles and descriptions
+            
+        Returns:
+            DataFrame with advanced text features
+        """
+        import re
+        from collections import Counter
+        
+        result = pd.DataFrame(index=df.index)
+        
+        # Check if title column exists
+        if 'title' not in df.columns:
+            logger.warning("Title column not found for text feature extraction")
+            return result
+        
+        # Common clickbait phrases and emotion words
+        clickbait_phrases = [
+            'you won\'t believe', 'mind blowing', 'amazing', 'shocking', 'insane', 
+            'unbelievable', 'won\'t believe', 'must see', 'mind-blowing', 'incredible',
+            'shocking', 'secret', 'surprising', 'revealed', 'miracle', 'revolutionary'
+        ]
+        
+        # Positive and negative emotional words
+        positive_words = [
+            'amazing', 'awesome', 'beautiful', 'best', 'brilliant', 'congrats', 
+            'excellent', 'exciting', 'fantastic', 'fun', 'glad', 'good', 'great', 
+            'happy', 'impressive', 'love', 'perfect', 'remarkable', 'spectacular', 
+            'super', 'terrific', 'wonderful'
+        ]
+        
+        negative_words = [
+            'angry', 'awful', 'bad', 'disappointing', 'disaster', 'disturbing', 
+            'fail', 'horrible', 'negative', 'sad', 'scary', 'shocked', 'terrible', 
+            'tragic', 'ugly', 'unfortunate', 'upset', 'worst', 'wrong'
+        ]
+        
+        # Create features based on titles
+        titles = df['title'].fillna('').astype(str)
+        
+        # Basic text cleaning
+        def clean_text(text):
+            text = text.lower()
+            text = re.sub(r'[^\w\s]', ' ', text)  # Replace punctuation with space
+            text = re.sub(r'\s+', ' ', text).strip()  # Normalize whitespace
+            return text
+        
+        # Title length stats
+        result['title_char_count'] = titles.apply(len)
+        result['title_word_count'] = titles.apply(lambda x: len(x.split()))
+        
+        # Advanced features
+        cleaned_titles = titles.apply(clean_text)
+        
+        # Clickbait score - presence of clickbait phrases
+        result['clickbait_score'] = cleaned_titles.apply(
+            lambda x: sum(1 for phrase in clickbait_phrases if phrase in x)
+        )
+        
+        # Emotional content
+        result['title_positive_words'] = cleaned_titles.apply(
+            lambda x: sum(1 for word in positive_words if word in x.split())
+        )
+        
+        result['title_negative_words'] = cleaned_titles.apply(
+            lambda x: sum(1 for word in negative_words if word in x.split())
+        )
+        
+        result['title_emotion_ratio'] = (result['title_positive_words'] - result['title_negative_words']).apply(
+            lambda x: x if x != 0 else 0
+        )
+        
+        # Title has question
+        result['title_has_question'] = titles.apply(lambda x: 1 if '?' in x else 0)
+        
+        # Title has exclamation
+        result['title_has_exclamation'] = titles.apply(lambda x: 1 if '!' in x else 0)
+        
+        # Title capitalization (ALL CAPS words percentage)
+        def caps_percentage(title):
+            words = title.split()
+            if not words:
+                return 0
+            caps_words = sum(1 for word in words if word.isupper() and len(word) > 1)
+            return caps_words / len(words) * 100
+        
+        result['title_caps_percentage'] = titles.apply(caps_percentage)
+        
+        # Number of brackets (often used for clarification or clickbait)
+        result['title_brackets_count'] = titles.apply(
+            lambda x: x.count('(') + x.count('[') + x.count('{')
+        )
+        
+        # Word diversity (unique words / total words)
+        def word_diversity(text):
+            words = text.lower().split()
+            if not words:
+                return 0
+            return len(set(words)) / len(words)
+        
+        result['title_word_diversity'] = cleaned_titles.apply(word_diversity)
+        
+        # If description column exists, extract features from it too
+        if 'description' in df.columns:
+            descriptions = df['description'].fillna('').astype(str)
+            cleaned_descriptions = descriptions.apply(clean_text)
+            
+            # Description length
+            result['desc_char_count'] = descriptions.apply(len)
+            result['desc_word_count'] = descriptions.apply(lambda x: len(x.split()))
+            
+            # URL count (common in descriptions)
+            result['desc_url_count'] = descriptions.apply(
+                lambda x: x.count('http')
+            )
+            
+            # Hashtag count
+            result['desc_hashtag_count'] = descriptions.apply(
+                lambda x: x.count('#')
+            )
+            
+            # Mention count
+            result['desc_mention_count'] = descriptions.apply(
+                lambda x: x.count('@')
+            )
+        
+        # If tags column exists, extract features from it
+        if 'tags' in df.columns:
+            # Ensure tags are in a usable format (assuming they might be stored as a string)
+            def parse_tags(tag_str):
+                if not isinstance(tag_str, str):
+                    return []
+                # Handle various formats - JSON list, comma-separated, etc.
+                tag_str = tag_str.strip()
+                if not tag_str:
+                    return []
+                if tag_str.startswith('[') and tag_str.endswith(']'):
+                    try:
+                        import json
+                        return json.loads(tag_str)
+                    except:
+                        pass
+                return [t.strip() for t in tag_str.split(',')]
+            
+            # Extract tag features
+            tags_list = df['tags'].apply(parse_tags)
+            result['tag_count'] = tags_list.apply(len)
+            result['tag_avg_length'] = tags_list.apply(
+                lambda tags: np.mean([len(t) for t in tags]) if tags else 0
+            )
+        
+        return result
+
+    def extract_engagement_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Extract engagement-related features from video data.
+        
+        Args:
+            df: DataFrame with video statistics
+            
+        Returns:
+            DataFrame with engagement features
+        """
+        result = pd.DataFrame(index=df.index)
+        
+        # Check for required columns
+        required_cols = ['views', 'likes', 'comments']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        
+        if missing_cols:
+            logger.warning(f"Missing required columns for engagement features: {missing_cols}")
+            return result
+        
+        # Convert to numeric and fill missing values
+        views = pd.to_numeric(df['views'], errors='coerce').fillna(0).clip(lower=1)  # Avoid division by zero
+        likes = pd.to_numeric(df['likes'], errors='coerce').fillna(0)
+        comments = pd.to_numeric(df['comments'], errors='coerce').fillna(0)
+        
+        # Basic engagement ratios
+        result['like_view_ratio'] = (likes / views * 100).clip(upper=100)  # As percentage
+        result['comment_view_ratio'] = (comments / views * 100).clip(upper=100)  # As percentage
+        
+        # Combined engagement score (weighted)
+        # Weight likes and comments based on their typical distribution
+        result['engagement_score'] = ((likes + comments * 5) / views * 100).clip(upper=100)
+        
+        # If we have publish time and fetch time, calculate rate metrics
+        if 'publish_time' in df.columns and 'fetch_time' in df.columns:
+            try:
+                # Calculate hours since published
+                pub_time = pd.to_datetime(df['publish_time'], errors='coerce')
+                fetch_time = pd.to_datetime(df['fetch_time'], errors='coerce')
+                
+                # Skip rows with invalid datetime
+                valid_times = ~(pub_time.isna() | fetch_time.isna())
+                hours_diff = (fetch_time[valid_times] - pub_time[valid_times]).dt.total_seconds() / 3600
+                
+                # Initialize with zeros
+                result['hours_since_published'] = 0
+                result['views_per_hour'] = 0
+                result['likes_per_hour'] = 0
+                result['comments_per_hour'] = 0
+                
+                # Update only rows with valid time data
+                result.loc[valid_times, 'hours_since_published'] = hours_diff
+                
+                # Avoid division by zero by setting a minimum time
+                hours_diff = hours_diff.clip(lower=1/60)  # Minimum 1 minute
+                
+                # Calculate rates
+                result.loc[valid_times, 'views_per_hour'] = views[valid_times] / hours_diff
+                result.loc[valid_times, 'likes_per_hour'] = likes[valid_times] / hours_diff
+                result.loc[valid_times, 'comments_per_hour'] = comments[valid_times] / hours_diff
+                
+                # Virality score - combination of velocity and total views
+                # Emphasized for videos that get lots of engagement in a short time
+                result.loc[valid_times, 'virality_score'] = (
+                    result.loc[valid_times, 'views_per_hour'] * 
+                    np.log1p(views[valid_times]) / 
+                    np.sqrt(hours_diff.clip(lower=1))
+                )
+                
+                # Age-adjusted engagement score
+                result.loc[valid_times, 'age_adjusted_engagement'] = (
+                    result.loc[valid_times, 'engagement_score'] / 
+                    np.log1p(hours_diff)
+                )
+            except Exception as e:
+                logger.warning(f"Error calculating time-based features: {e}")
+        
+        # If we have channel data, create channel-related features
+        if 'channel_id' in df.columns:
+            try:
+                # Count videos by channel
+                channel_counts = df['channel_id'].value_counts()
+                result['channel_video_count'] = df['channel_id'].map(channel_counts)
+                
+                # Channel average engagement (if we have enough data)
+                if len(df) > 100:  # Only calculate if we have a decent sample
+                    channel_avg_engagement = df.groupby('channel_id')['engagement_score'].mean()
+                    result['channel_avg_engagement'] = df['channel_id'].map(channel_avg_engagement)
+                    
+                    # Relative engagement (compared to channel average)
+                    result['relative_engagement'] = result['engagement_score'] / result['channel_avg_engagement'].fillna(1)
+            except Exception as e:
+                logger.warning(f"Error calculating channel features: {e}")
+        
+        return result
+
+    def extract_temporal_patterns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Extract features related to temporal patterns and trends.
+        
+        Args:
+            df: DataFrame with video data including publishing time
+            
+        Returns:
+            DataFrame with temporal pattern features
+        """
+        result = pd.DataFrame(index=df.index)
+        
+        # Check if publish_time column exists
+        if 'publish_time' not in df.columns:
+            logger.warning("publish_time column not found for temporal pattern extraction")
+            return result
+        
+        try:
+            # Convert to datetime
+            pub_time = pd.to_datetime(df['publish_time'], errors='coerce')
+            valid_times = ~pub_time.isna()
+            
+            # Basic time components
+            result['publish_hour'] = np.nan
+            result['publish_day'] = np.nan
+            result['publish_month'] = np.nan
+            result['publish_year'] = np.nan
+            result['publish_dayofweek'] = np.nan
+            result['publish_weekend'] = np.nan
+            result['publish_quarter'] = np.nan
+            
+            # Extract for valid times
+            result.loc[valid_times, 'publish_hour'] = pub_time[valid_times].dt.hour
+            result.loc[valid_times, 'publish_day'] = pub_time[valid_times].dt.day
+            result.loc[valid_times, 'publish_month'] = pub_time[valid_times].dt.month
+            result.loc[valid_times, 'publish_year'] = pub_time[valid_times].dt.year
+            result.loc[valid_times, 'publish_dayofweek'] = pub_time[valid_times].dt.dayofweek
+            result.loc[valid_times, 'publish_weekend'] = (pub_time[valid_times].dt.dayofweek >= 5).astype(int)
+            result.loc[valid_times, 'publish_quarter'] = pub_time[valid_times].dt.quarter
+            
+            # Time of day categories
+            def time_of_day(hour):
+                if 5 <= hour < 12:
+                    return 'morning'
+                elif 12 <= hour < 17:
+                    return 'afternoon'
+                elif 17 <= hour < 22:
+                    return 'evening'
+                else:
+                    return 'night'
+            
+            result.loc[valid_times, 'time_of_day'] = pub_time[valid_times].dt.hour.apply(time_of_day)
+            
+            # Day part features
+            result['publish_morning'] = (result['time_of_day'] == 'morning').astype(int)
+            result['publish_afternoon'] = (result['time_of_day'] == 'afternoon').astype(int)
+            result['publish_evening'] = (result['time_of_day'] == 'evening').astype(int)
+            result['publish_night'] = (result['time_of_day'] == 'night').astype(int)
+            
+            # Cyclic time features (to preserve cyclical nature)
+            result.loc[valid_times, 'hour_sin'] = np.sin(2 * np.pi * pub_time[valid_times].dt.hour / 24)
+            result.loc[valid_times, 'hour_cos'] = np.cos(2 * np.pi * pub_time[valid_times].dt.hour / 24)
+            
+            result.loc[valid_times, 'day_sin'] = np.sin(2 * np.pi * pub_time[valid_times].dt.day / 31)
+            result.loc[valid_times, 'day_cos'] = np.cos(2 * np.pi * pub_time[valid_times].dt.day / 31)
+            
+            result.loc[valid_times, 'month_sin'] = np.sin(2 * np.pi * pub_time[valid_times].dt.month / 12)
+            result.loc[valid_times, 'month_cos'] = np.cos(2 * np.pi * pub_time[valid_times].dt.month / 12)
+            
+            result.loc[valid_times, 'dayofweek_sin'] = np.sin(2 * np.pi * pub_time[valid_times].dt.dayofweek / 7)
+            result.loc[valid_times, 'dayofweek_cos'] = np.cos(2 * np.pi * pub_time[valid_times].dt.dayofweek / 7)
+            
+            # If we have fetch_time, calculate publishing delay features
+            if 'fetch_time' in df.columns:
+                fetch_time = pd.to_datetime(df['fetch_time'], errors='coerce')
+                valid_both = ~(pub_time.isna() | fetch_time.isna())
+                
+                hours_diff = (fetch_time[valid_both] - pub_time[valid_both]).dt.total_seconds() / 3600
+                days_diff = hours_diff / 24
+                
+                result.loc[valid_both, 'hours_since_published'] = hours_diff
+                result.loc[valid_both, 'days_since_published'] = days_diff
+                
+                # Trending delay categories
+                def trending_delay_category(hours):
+                    if hours < 24:
+                        return 'same_day'
+                    elif hours < 48:
+                        return 'next_day'
+                    elif hours < 168:  # 7 days
+                        return 'same_week'
+                    else:
+                        return 'later'
+                
+                result.loc[valid_both, 'trending_delay'] = hours_diff.apply(trending_delay_category)
+                
+                # Convert to dummy variables
+                result['trending_same_day'] = (result['trending_delay'] == 'same_day').astype(int)
+                result['trending_next_day'] = (result['trending_delay'] == 'next_day').astype(int)
+                result['trending_same_week'] = (result['trending_delay'] == 'same_week').astype(int)
+                result['trending_later'] = (result['trending_delay'] == 'later').astype(int)
+                
+        except Exception as e:
+            logger.warning(f"Error extracting temporal patterns: {e}")
+        
+        return result
+
+    def extract_content_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Extract features related to video content and metadata.
+        
+        Args:
+            df: DataFrame with video data
+            
+        Returns:
+            DataFrame with content-related features
+        """
+        result = pd.DataFrame(index=df.index)
+        
+        # Duration-related features
+        if 'duration' in df.columns or 'duration_seconds' in df.columns:
+            try:
+                # Get duration in seconds
+                if 'duration_seconds' in df.columns:
+                    duration_seconds = pd.to_numeric(df['duration_seconds'], errors='coerce').fillna(0)
+                else:
+                    # Parse ISO 8601 duration format (PT1H2M3S)
+                    import re
+                    
+                    def parse_duration(duration_str):
+                        if not isinstance(duration_str, str):
+                            return 0
+                        
+                        # Extract hours, minutes, seconds
+                        hours = re.search(r'(\d+)H', duration_str)
+                        minutes = re.search(r'(\d+)M', duration_str)
+                        seconds = re.search(r'(\d+)S', duration_str)
+                        
+                        hours = int(hours.group(1)) if hours else 0
+                        minutes = int(minutes.group(1)) if minutes else 0
+                        seconds = int(seconds.group(1)) if seconds else 0
+                        
+                        return hours * 3600 + minutes * 60 + seconds
+                    
+                    duration_seconds = df['duration'].apply(parse_duration)
+                
+                # Store the duration in seconds
+                result['duration_seconds'] = duration_seconds
+                
+                # Duration in minutes (more interpretable)
+                result['duration_minutes'] = duration_seconds / 60
+                
+                # Log-transformed duration
+                result['duration_log'] = np.log1p(duration_seconds)
+                
+                # Duration categories
+                def duration_category(seconds):
+                    if seconds < 60:  # < 1 min
+                        return 'very_short'
+                    elif seconds < 300:  # < 5 min
+                        return 'short'
+                    elif seconds < 1200:  # < 20 min
+                        return 'medium'
+                    elif seconds < 3600:  # < 1 hour
+                        return 'long'
+                    else:  # >= 1 hour
+                        return 'very_long'
+                
+                result['duration_category'] = duration_seconds.apply(duration_category)
+                
+                # Convert to dummy variables
+                result['duration_very_short'] = (result['duration_category'] == 'very_short').astype(int)
+                result['duration_short'] = (result['duration_category'] == 'short').astype(int)
+                result['duration_medium'] = (result['duration_category'] == 'medium').astype(int)
+                result['duration_long'] = (result['duration_category'] == 'long').astype(int)
+                result['duration_very_long'] = (result['duration_category'] == 'very_long').astype(int)
+                
+            except Exception as e:
+                logger.warning(f"Error extracting duration features: {e}")
+        
+        # Title-specific content features
+        if 'title' in df.columns:
+            try:
+                titles = df['title'].fillna('').astype(str)
+                
+                # Extract patterns from titles
+                result['title_has_number'] = titles.str.contains(r'\d').astype(int)
+                result['title_has_question'] = titles.str.contains(r'\?').astype(int)
+                result['title_has_exclamation'] = titles.str.contains(r'!').astype(int)
+                result['title_has_emoji'] = titles.apply(
+                    lambda x: bool(re.search(r'[\U00010000-\U0010ffff]', x))
+                ).astype(int)
+                
+                # Common video title patterns
+                result['title_has_part_number'] = titles.str.contains(
+                    r'part\s*\d+|pt\.?\s*\d+|\(\s*\d+\s*\)|#\s*\d+', 
+                    case=False
+                ).astype(int)
+                
+                result['title_has_year'] = titles.str.contains(
+                    r'\b20\d{2}\b|\b19\d{2}\b'
+                ).astype(int)
+                
+                result['title_has_tutorial'] = titles.str.contains(
+                    r'tutorial|how\s+to|guide|tips|tricks|learn|course', 
+                    case=False
+                ).astype(int)
+                
+                result['title_has_review'] = titles.str.contains(
+                    r'review|unboxing|vs\.?|versus', 
+                    case=False
+                ).astype(int)
+                
+                result['title_has_reaction'] = titles.str.contains(
+                    r'react|reaction|watching', 
+                    case=False
+                ).astype(int)
+                
+                result['title_is_clickbait'] = titles.str.contains(
+                    r'you won\'t believe|mind blowing|amazing|shocking|insane|unbelievable|must see|incredible|shocking|secret|revealed', 
+                    case=False
+                ).astype(int)
+                
+                # Title capitalization
+                def title_caps_count(title):
+                    words = title.split()
+                    return sum(1 for word in words if word.isupper() and len(word) > 1)
+                
+                result['title_caps_count'] = titles.apply(title_caps_count)
+                
+            except Exception as e:
+                logger.warning(f"Error extracting title content features: {e}")
+        
+        # Description-specific content features
+        if 'description' in df.columns:
+            try:
+                descriptions = df['description'].fillna('').astype(str)
+                
+                # Length of description
+                result['description_length'] = descriptions.apply(len)
+                result['description_word_count'] = descriptions.apply(lambda x: len(x.split()))
+                
+                # Links in description
+                result['description_has_links'] = descriptions.str.contains(r'http').astype(int)
+                result['description_link_count'] = descriptions.str.count(r'http')
+                
+                # Social media links
+                platforms = ['facebook', 'twitter', 'instagram', 'tiktok', 'linkedin', 'snapchat', 'youtube']
+                for platform in platforms:
+                    result[f'has_{platform}_link'] = descriptions.str.contains(
+                        f'(?:www\.)?{platform}\.com|{platform}(?:\.com)?', 
+                        case=False
+                    ).astype(int)
+                
+                # Description has timestamps (common in longer videos)
+                result['has_timestamps'] = descriptions.str.contains(
+                    r'\d{1,2}:\d{2}'
+                ).astype(int)
+                
+                # Description has music credits
+                result['has_music_credits'] = descriptions.str.contains(
+                    r'music|song|track|artist|album|composer|producer', 
+                    case=False
+                ).astype(int)
+                
+                # Description has partner/sponsor mentions
+                result['has_sponsor'] = descriptions.str.contains(
+                    r'sponsor|partner|promotion|discount|code|affiliate|deal', 
+                    case=False
+                ).astype(int)
+                
+            except Exception as e:
+                logger.warning(f"Error extracting description content features: {e}")
+        
+        return result
 
 # Example usage
 if __name__ == "__main__":

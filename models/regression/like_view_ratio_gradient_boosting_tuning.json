@@ -1,0 +1,260 @@
+{
+  "best_params": {
+    "subsample": 0.6,
+    "n_estimators": 100,
+    "min_samples_split": 10,
+    "min_samples_leaf": 2,
+    "max_features": null,
+    "max_depth": 8,
+    "learning_rate": 0.1
+  },
+  "best_score": -0.1612410576675523,
+  "mean_test_score": [
+    -3.240962396239843,
+    -3.190726295036479,
+    -0.1612410576675523,
+    -0.5188680702001369,
+    -2.961845356713517,
+    -0.7265234010004076,
+    -0.700969614200918,
+    -0.3642224425833909,
+    -0.4319948239363459,
+    -0.3783789447782887,
+    -3.237533460150236,
+    -0.7332362811123289,
+    -0.35384530117893837,
+    -0.5472801218154555,
+    -3.2947373990781292,
+    -0.24029817106819568,
+    -1.0164748691291565,
+    -0.5281017489783503,
+    -0.41567390160927975,
+    -3.300780411810785
+  ],
+  "std_test_score": [
+    0.44200079329241343,
+    0.44479520440980985,
+    0.0792886183281567,
+    0.1042198580954183,
+    0.43846591601270246,
+    0.192285550315454,
+    0.138921931896766,
+    0.1256931780156996,
+    0.06596392816370143,
+    0.21515940920879853,
+    0.4398881219863224,
+    0.15563190911584557,
+    0.12234089248114045,
+    0.07956481369372022,
+    0.4537356318974955,
+    0.1619523160629015,
+    0.3110922546923919,
+    0.06610459607224539,
+    0.06842303284577166,
+    0.45641231330055393
+  ],
+  "mean_train_score": [
+    -3.262623143914387,
+    -3.2028464367488083,
+    -0.05060142415741551,
+    -0.15485314790464666,
+    -2.9813892360885186,
+    -0.012990257488393775,
+    -0.3262920722741339,
+    -0.019480223807214304,
+    -0.03623645704071975,
+    -0.25110180105914637,
+    -3.2604991898185958,
+    -0.4731814810065679,
+    -0.035771209440340554,
+    -0.13326233829990222,
+    -3.310890465545879,
+    -0.0016674715569192007,
+    -0.8082176536853858,
+    -0.0650387708952651,
+    -0.03076148679397131,
+    -3.316721410962176
+  ],
+  "params": [
+    {
+      "subsample": 0.6,
+      "n_estimators": 50,
+      "min_samples_split": 5,
+      "min_samples_leaf": 1,
+      "max_features": null,
+      "max_depth": 8,
+      "learning_rate": 0.001
+    },
+    {
+      "subsample": 0.6,
+      "n_estimators": 100,
+      "min_samples_split": 20,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt",
+      "max_depth": 3,
+      "learning_rate": 0.001
+    },
+    {
+      "subsample": 0.6,
+      "n_estimators": 100,
+      "min_samples_split": 10,
+      "min_samples_leaf": 2,
+      "max_features": null,
+      "max_depth": 8,
+      "learning_rate": 0.1
+    },
+    {
+      "subsample": 0.7,
+      "n_estimators": 350,
+      "min_samples_split": 20,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt",
+      "max_depth": 8,
+      "learning_rate": 0.05
+    },
+    {
+      "subsample": 0.6,
+      "n_estimators": 150,
+      "min_samples_split": 20,
+      "min_samples_leaf": 4,
+      "max_features": null,
+      "max_depth": 4,
+      "learning_rate": 0.001
+    },
+    {
+      "subsample": 0.7,
+      "n_estimators": 400,
+      "min_samples_split": 2,
+      "min_samples_leaf": 2,
+      "max_features": "log2",
+      "max_depth": 3,
+      "learning_rate": 0.2
+    },
+    {
+      "subsample": 1.0,
+      "n_estimators": 250,
+      "min_samples_split": 5,
+      "min_samples_leaf": 1,
+      "max_features": "sqrt",
+      "max_depth": 10,
+      "learning_rate": 0.01
+    },
+    {
+      "subsample": 0.9,
+      "n_estimators": 200,
+      "min_samples_split": 20,
+      "min_samples_leaf": 6,
+      "max_features": null,
+      "max_depth": 4,
+      "learning_rate": 0.2
+    },
+    {
+      "subsample": 0.7,
+      "n_estimators": 350,
+      "min_samples_split": 2,
+      "min_samples_leaf": 2,
+      "max_features": "sqrt",
+      "max_depth": 4,
+      "learning_rate": 0.05
+    },
+    {
+      "subsample": 0.9,
+      "n_estimators": 100,
+      "min_samples_split": 20,
+      "min_samples_leaf": 4,
+      "max_features": null,
+      "max_depth": 10,
+      "learning_rate": 0.05
+    },
+    {
+      "subsample": 0.9,
+      "n_estimators": 50,
+      "min_samples_split": 5,
+      "min_samples_leaf": 2,
+      "max_features": null,
+      "max_depth": 8,
+      "learning_rate": 0.001
+    },
+    {
+      "subsample": 0.6,
+      "n_estimators": 100,
+      "min_samples_split": 15,
+      "min_samples_leaf": 4,
+      "max_features": "sqrt",
+      "max_depth": 3,
+      "learning_rate": 0.05
+    },
+    {
+      "subsample": 0.7,
+      "n_estimators": 400,
+      "min_samples_split": 15,
+      "min_samples_leaf": 6,
+      "max_features": null,
+      "max_depth": 4,
+      "learning_rate": 0.1
+    },
+    {
+      "subsample": 0.6,
+      "n_estimators": 250,
+      "min_samples_split": 2,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt",
+      "max_depth": 4,
+      "learning_rate": 0.1
+    },
+    {
+      "subsample": 1.0,
+      "n_estimators": 50,
+      "min_samples_split": 10,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt",
+      "max_depth": 3,
+      "learning_rate": 0.001
+    },
+    {
+      "subsample": 0.6,
+      "n_estimators": 250,
+      "min_samples_split": 10,
+      "min_samples_leaf": 1,
+      "max_features": null,
+      "max_depth": 10,
+      "learning_rate": 0.05
+    },
+    {
+      "subsample": 0.6,
+      "n_estimators": 50,
+      "min_samples_split": 20,
+      "min_samples_leaf": 8,
+      "max_features": "log2",
+      "max_depth": 3,
+      "learning_rate": 0.1
+    },
+    {
+      "subsample": 0.6,
+      "n_estimators": 400,
+      "min_samples_split": 10,
+      "min_samples_leaf": 6,
+      "max_features": "sqrt",
+      "max_depth": 4,
+      "learning_rate": 0.1
+    },
+    {
+      "subsample": 1.0,
+      "n_estimators": 200,
+      "min_samples_split": 2,
+      "min_samples_leaf": 4,
+      "max_features": "sqrt",
+      "max_depth": 5,
+      "learning_rate": 0.1
+    },
+    {
+      "subsample": 0.7,
+      "n_estimators": 50,
+      "min_samples_split": 15,
+      "min_samples_leaf": 6,
+      "max_features": "log2",
+      "max_depth": 4,
+      "learning_rate": 0.001
+    }
+  ]
+}
